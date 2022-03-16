@@ -16,7 +16,8 @@ contract Campaign {
     address public manager;
     mapping (address => bool) public contributors;
     uint public minContribution;
-    uint contributorsCount;
+    uint public contributorsCount;
+    address[] public contributorsList;
     
     constructor(uint minAmt, address creator) {
         manager = creator;
@@ -26,7 +27,12 @@ contract Campaign {
     function getMinContribution() public view returns (uint){
         return minContribution;
     }
-
+    function getContributorsCount() public view returns (uint){
+        return contributorsCount;
+    }
+    function getContributorsList() public view returns (address[] memory) {
+        return contributorsList;
+    }
     function getManager() public view returns (address){
         return manager;
     }
@@ -72,6 +78,7 @@ contract Campaign {
         //require(!contributors[msg.sender]);
         
         contributors[msg.sender] = true;
+        contributorsList.push(msg.sender);
         contributorsCount++;    
     }
 

@@ -1,30 +1,52 @@
 import React from 'react';
 import Link from 'next/link';
-import { Card } from 'semantic-ui-react';
-import { Button } from 'semantic-ui-react';
+import { Table, Button } from 'semantic-ui-react';
 import Layout from 'components/Layout';
 import getCampaign from 'ethereum/campaign';
+import RequestRow from 'components/RequestRow';
 
 function Home(props) {
   //const [campaignRequests, setDeployedCampaigns] = React.useState(props.campaigns);
+  const cID = props.cID;
   const campaignRequests = props.requests;
+  const contributorsCount = props.contributorsCount;
 
   function renderRequests() {
-    const items = campaignRequests.map(c => (
-      {
-        header: c.description,
-        description: <Link href={`/campaigns/${c}`}>View Request</Link>,
-        //fluid: true
-      }
-    ))
-    return <Card.Group items={items} />
+    const requests = JSON.parse(props.requests);
+    if (!requests.length) {
+      return 'No requests yet';
+    }
+    console.log('requests =>', requests);
+
+    return (
+      <Table striped>
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell>ID</Table.HeaderCell>
+            <Table.HeaderCell>Description</Table.HeaderCell>
+            <Table.HeaderCell>Amount</Table.HeaderCell>
+            <Table.HeaderCell>Recipient</Table.HeaderCell>
+            <Table.HeaderCell>Approval Count</Table.HeaderCell>
+            <Table.HeaderCell>Approve</Table.HeaderCell>
+            <Table.HeaderCell>Finalize</Table.HeaderCell>
+          </Table.Row>
+        </Table.Header>
+
+        <Table.Body>
+          {
+            requests.map((r,i) => (
+              <RequestRow id={i} cID={cID} request={r} key={i} contributorsCount={contributorsCount}/>
+            ))
+          }
+        </Table.Body>
+      </Table>
+    )
   }
 
   return (
     <Layout>
       <h3>Requests List</h3>
-      {renderRequests()}
-      <Link href={`/campaigns/${props.cID}/requests/new`}>
+      <Link href={`/campaigns/${props.cID}/requests/new`} style={{marginBottom: '20px'}}>
         <Button
           floated='right'
           primary
@@ -34,8 +56,7 @@ function Home(props) {
           labelPosition='left'
         />
       </Link>
-      {//renderRequests()
-      }
+      {renderRequests()}
     </Layout>
   )
 }
@@ -52,16 +73,16 @@ export async function getStaticProps(params) {
 export async function getServerSideProps(context) {
   const campaign = getCampaign(context.params.id);
   const requestsCount = await campaign.methods.getRequestsCount().call();
-  const requests = [];
-  for (let i = 0; i < requestsCount; i++) {
-    const request = await campaign.methods.requests(i).call();
-    requests.push(request);
-  }
-  console.log(requests);
+  const contributorsCount = await campaign.methods.contributorsCount().call();
+  let requests = await Promise.all(Array(parseInt(requestsCount)).fill().map((r, index) => {
+    return campaign.methods.requests(index).call();
+  }))
+
   return {
     props: {
       cID: context.params.id,
-      requests: requests
+      contributorsCount: contributorsCount,
+      requests: JSON.stringify(requests),
     }
   }
 }

@@ -56,10 +56,6 @@ function NewRequest(props) {
           onDismiss={handleDismissError}
           content={errMsg}
           header='There was some errors with your submission'
-          list={[
-            'You must include both a upper and lower case letters in your password.',
-            'You need to select your home country.',
-          ]}
         />
         <Form.Group widths='equal'>
           <Form.Field>
